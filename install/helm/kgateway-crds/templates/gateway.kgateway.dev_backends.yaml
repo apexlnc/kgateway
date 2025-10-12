@@ -261,6 +261,15 @@ spec:
                       port:
                         format: int32
                         type: integer
+                      routes:
+                        additionalProperties:
+                          enum:
+                          - completions
+                          - messages
+                          - models
+                          - passthrough
+                          type: string
+                        type: object
                       vertexai:
                         properties:
                           apiVersion:
@@ -552,6 +561,15 @@ spec:
                               port:
                                 format: int32
                                 type: integer
+                              routes:
+                                additionalProperties:
+                                  enum:
+                                  - completions
+                                  - messages
+                                  - models
+                                  - passthrough
+                                  type: string
+                                type: object
                               vertexai:
                                 properties:
                                   apiVersion:

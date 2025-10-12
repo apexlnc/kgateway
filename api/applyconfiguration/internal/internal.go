@@ -1574,6 +1574,11 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: port
       type:
         scalar: numeric
+    - name: routes
+      type:
+        map:
+          elementType:
+            scalar: string
     - name: vertexai
       type:
         namedType: com.github.kgateway-dev.kgateway.v2.api.v1alpha1.VertexAIConfig
@@ -1881,6 +1886,11 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: port
       type:
         scalar: numeric
+    - name: routes
+      type:
+        map:
+          elementType:
+            scalar: string
     - name: vertexai
       type:
         namedType: com.github.kgateway-dev.kgateway.v2.api.v1alpha1.VertexAIConfig

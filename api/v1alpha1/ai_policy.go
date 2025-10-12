@@ -26,7 +26,7 @@ type AIPolicy struct {
 	// Note: This field is not applicable when using agentgateway
 	// +kubebuilder:validation:Enum=CHAT;CHAT_STREAMING
 	// +kubebuilder:default=CHAT
-	RouteType *RouteType `json:"routeType,omitempty"`
+	RouteType *string `json:"routeType,omitempty"`
 
 	// ModelAliases maps friendly model names to actual provider model names.
 	// Example: {"fast": "gpt-3.5-turbo", "smart": "gpt-4-turbo"}
@@ -36,7 +36,7 @@ type AIPolicy struct {
 }
 
 // AIPromptEnrichment defines the config to enrich requests sent to the LLM provider by appending and prepending system prompts.
-// This can be configured only for LLM providers that use the `CHAT` or `CHAT_STREAMING` API type.
+// This can be configured only for LLM providers that use streaming or non-streaming mode.
 //
 // Prompt enrichment allows you to add additional context to the prompt before sending it to the model.
 // Unlike RAG or other dynamic context methods, prompt enrichment is static and is applied to every request.
@@ -76,15 +76,10 @@ type AIPromptEnrichment struct {
 	Append []Message `json:"append,omitempty"`
 }
 
-// RouteType is the type of route to the LLM provider API.
-type RouteType string
-
+// Constants for the RouteType field. Only applicable for deprecated Envoy AI backend.
 const (
-	// The LLM generates the full response before responding to a client.
-	CHAT RouteType = "CHAT"
-
-	// Stream responses to a client, which allows the LLM to stream out tokens as they are generated.
-	CHAT_STREAMING RouteType = "CHAT_STREAMING"
+	CHAT           = "CHAT"
+	CHAT_STREAMING = "CHAT_STREAMING"
 )
 
 // An entry for a message to prepend or append to each prompt.
