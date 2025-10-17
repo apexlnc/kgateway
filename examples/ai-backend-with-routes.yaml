@@ -1,0 +1,52 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: ai-gateway
+spec:
+  gatewayClassName: agentgateway
+  listeners:
+  - name: http
+    port: 8080
+    protocol: HTTP
+---
+apiVersion: gateway.kgateway.dev/v1alpha1
+kind: Backend
+metadata:
+  name: unified-ai-backend
+spec:
+  type: AI
+  ai:
+    llm:
+      openai:
+        model: gpt-4o-mini
+        authToken:
+          kind: SecretRef
+          secretRef:
+            name: openai-secret
+      # Configure how different API paths are processed
+      routes:
+        "/v1/chat/completions": "completions"  # OpenAI format
+        "/v1/messages": "messages"              # Anthropic format
+        "/v1/models": "models"                  # List models
+        "*": "passthrough"                      # Default for all other paths
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: ai-route
+spec:
+  parentRefs:
+  - name: ai-gateway
+  rules:
+  - backendRefs:
+    - group: gateway.kgateway.dev
+      kind: Backend
+      name: unified-ai-backend
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: openai-secret
+type: Opaque
+stringData:
+  Authorization: "Bearer sk-your-openai-key"
