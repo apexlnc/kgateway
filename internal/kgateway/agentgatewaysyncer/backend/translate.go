@@ -129,7 +129,6 @@ func translateLLMProviderToProvider(krtctx krt.HandlerContext, llm *v1alpha1.LLM
 		}
 	}
 
-	// Translate routes map
 	if llm.Routes != nil && len(llm.Routes) > 0 {
 		provider.Routes = make(map[string]api.AIBackend_RouteType)
 		for path, routeType := range llm.Routes {

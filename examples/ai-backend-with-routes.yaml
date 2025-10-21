@@ -17,13 +17,12 @@ spec:
   type: AI
   ai:
     llm:
-      openai:
-        model: gpt-4o-mini
+      anthropic:
+        model: claude-sonnet-4-20250514
         authToken:
           kind: SecretRef
           secretRef:
-            name: openai-secret
-      # Configure how different API paths are processed using suffix matching.
+            name: anthropic-secret
       routes:
         "/v1/chat/completions": "completions"
         "/v1/messages": "messages"
@@ -46,7 +45,7 @@ spec:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: openai-secret
+  name: anthropic-secret
 type: Opaque
 stringData:
-  Authorization: "Bearer sk-your-openai-key"
+  x-api-key: "sk-ant-your-anthropic-key"
