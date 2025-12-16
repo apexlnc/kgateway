@@ -6,6 +6,7 @@ import (
 	"github.com/agentgateway/agentgateway/go/api"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"istio.io/istio/pkg/config/protocol"
 	"k8s.io/utils/ptr"
 	gwv1 "sigs.k8s.io/gateway-api/apis/v1"
 
@@ -247,6 +248,18 @@ func TestGetProtocolAndTLSConfig(t *testing.T) {
 				PrivateKey: []byte("tls-key"),
 			},
 			expectedOk: true,
+		},
+		{
+			name: "HBONE protocol",
+			gateway: translator.GatewayListener{
+				ParentInfo: translator.ParentInfo{
+					Protocol: gwv1.ProtocolType(protocol.HBONE),
+				},
+				TLSInfo: nil,
+			},
+			expectedProto: api.Protocol_HBONE,
+			expectedTLS:   nil,
+			expectedOk:    true,
 		},
 	}
 

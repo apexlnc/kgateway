@@ -8,6 +8,7 @@ import (
 
 	"github.com/agentgateway/agentgateway/go/api"
 	"istio.io/istio/pkg/config"
+	"istio.io/istio/pkg/config/protocol"
 	"istio.io/istio/pkg/kube/krt"
 	"istio.io/istio/pkg/ptr"
 	"istio.io/istio/pkg/slices"
@@ -241,6 +242,7 @@ func (s *Syncer) buildAgwResources(
 		port, _ := strconv.Atoi(object.Key)
 		uniq := sets.New[types.NamespacedName]()
 		var protocol = api.Bind_Protocol(0)
+		var tunnelProtocol = api.Bind_DIRECT
 		for _, gw := range object.Objects {
 			uniq.Insert(types.NamespacedName{
 				Namespace: gw.ParentGateway.Namespace,
@@ -249,14 +251,16 @@ func (s *Syncer) buildAgwResources(
 			// TODO: better handle conflicts of protocols. For now, we arbitrarily treat TLS > plain
 			if gw.Valid {
 				protocol = max(protocol, s.getBindProtocol(gw))
+				tunnelProtocol = max(tunnelProtocol, s.getBindTunnelProtocol(gw))
 			}
 		}
 		return slices.Map(uniq.UnsortedList(), func(e types.NamespacedName) agwir.AgwResource {
 			bind := translator.AgwBind{
 				Bind: &api.Bind{
-					Key:      object.Key + "/" + e.String(),
-					Port:     uint32(port), //nolint:gosec // G115: port is always in valid port range
-					Protocol: protocol,
+					Key:            object.Key + "/" + e.String(),
+					Port:           uint32(port), //nolint:gosec // G115: port is always in valid port range
+					Protocol:       protocol,
+					TunnelProtocol: tunnelProtocol,
 				},
 			}
 			return translator.ToResourceForGateway(e, bind)
@@ -381,12 +385,14 @@ func (s *Syncer) getProtocolAndTLSConfig(obj *translator.GatewayListener) (api.P
 		return api.Protocol_TLS, tlsConfig, true
 	case gwv1.TCPProtocolType:
 		return api.Protocol_TCP, nil, true
+	case gwv1.ProtocolType(protocol.HBONE):
+		return api.Protocol_HBONE, nil, true
 	default:
 		return api.Protocol_HTTP, nil, false // Unsupported protocol
 	}
 }
 
-// getProtocolAndTLSConfig extracts protocol and TLS configuration from a gateway
+// getBindProtocol extracts protocol and TLS configuration from a gateway
 func (s *Syncer) getBindProtocol(obj *translator.GatewayListener) api.Bind_Protocol {
 	switch obj.ParentInfo.Protocol {
 	case gwv1.HTTPProtocolType:
@@ -397,8 +403,20 @@ func (s *Syncer) getBindProtocol(obj *translator.GatewayListener) api.Bind_Proto
 		return api.Bind_TLS
 	case gwv1.TCPProtocolType:
 		return api.Bind_TCP
+	case gwv1.ProtocolType(protocol.HBONE):
+		return api.Bind_TLS // HBONE uses mTLS as the underlying transport
 	default:
 		return api.Bind_HTTP
+	}
+}
+
+// getBindTunnelProtocol returns the tunnel protocol to use for a gateway listener
+func (s *Syncer) getBindTunnelProtocol(obj *translator.GatewayListener) api.Bind_TunnelProtocol {
+	switch obj.ParentInfo.Protocol {
+	case gwv1.ProtocolType(protocol.HBONE):
+		return api.Bind_HBONE_GATEWAY
+	default:
+		return api.Bind_DIRECT // No tunneling for non-HBONE protocols
 	}
 }
 
